@@ -34,7 +34,7 @@
 </head>
 <body class="h-full flex flex-col overflow-hidden text-slate-800 font-sans">
 
-    <!-- TOP HEADER -->
+    <!-- TOP HEADER (Đã loại bỏ nút Chẩn đoán lỗi API thừa) -->
     <header class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0 shadow-md">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
@@ -203,6 +203,14 @@
             fetchAllData();
         };
 
+        // HÀM CHUYỂN ĐỔI CHỮ VIẾT TẮT GIÁ TIỀN (AUTO 000)
+        function handleAdminPriceBlur(input) {
+            let val = parseInt(input.value) || 0;
+            if (val > 0 && val < 10000) {
+                input.value = val * 1000;
+            }
+        }
+
         async function fetchAllData() {
             const grid = document.getElementById('cards-grid');
             const loading = document.getElementById('loading-state');
@@ -250,7 +258,10 @@
 
             empty.classList.add('hidden');
 
-            items.forEach(row => {
+            // CHỐT: SẮP XẾP ĐƠN MỚI LÊN ĐẦU TIÊN (Theo ID giảm dần)
+            const sortedItems = [...items].sort((a, b) => b.id - a.id);
+
+            sortedItems.forEach(row => {
                 const card = document.createElement('div');
                 card.className = "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col";
 
@@ -418,7 +429,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block font-bold text-slate-600 mb-1">Giá bán (VND) *</label>
-                            <input type="number" id="edit-giaban" required value="${Number(rowDataRef["Giá bán"]) || 0}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                            <input type="number" id="edit-giaban" required value="${Number(rowDataRef["Giá bán"]) || 0}" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block font-bold text-slate-600 mb-1">Hình thức thanh toán</label>
@@ -443,7 +454,7 @@
                     </div>
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Chi phí (VND) *</label>
-                        <input type="number" id="edit-chiphi" required value="${Number(rowDataRef["Chi phí"]) || 0}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                        <input type="number" id="edit-chiphi" required value="${Number(rowDataRef["Chi phí"]) || 0}" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -485,7 +496,10 @@
             let payload = {};
 
             if (currentTab === 'mua-giay') {
-                const giaBanVal = Number(document.getElementById('edit-giaban').value.trim()) || 0;
+                let giaBanVal = Number(document.getElementById('edit-giaban').value.trim()) || 0;
+                // Kiểm tra gõ tắt giá bán
+                if (giaBanVal > 0 && giaBanVal < 10000) giaBanVal = giaBanVal * 1000;
+
                 payload = {
                     "Tên khách": document.getElementById('edit-ten').value.trim(),
                     "Số điện thoại": document.getElementById('edit-sdt').value.trim(),
@@ -495,11 +509,15 @@
                     "Tổng thanh toán đơn": Number(giaBanVal)
                 };
             } else {
+                let chiPhiVal = Number(document.getElementById('edit-chiphi').value.trim()) || 0;
+                // Kiểm tra gõ tắt phí giặt
+                if (chiPhiVal > 0 && chiPhiVal < 10000) chiPhiVal = chiPhiVal * 1000;
+
                 payload = {
                     "Tên khách hàng": document.getElementById('edit-ten').value.trim(),
                     "Số điện thoại": document.getElementById('edit-sdt').value.trim(),
                     "Dịch vụ": document.getElementById('edit-dichvu').value.trim(),
-                    "Chi phí": Number(document.getElementById('edit-chiphi').value.trim()) || 0,
+                    "Chi phí": Number(chiPhiVal),
                     "Trạng thái thanh toán": document.getElementById('edit-thanhtoan').value,
                     "Trạng thái xử lý": document.getElementById('edit-xuly').value
                 };
@@ -516,7 +534,9 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("Lỗi cập nhật API Baserow!");
+                    const errData = await response.json().catch(() => ({}));
+                    const detail = errData.detail || errData.error || "Không rõ nguyên nhân";
+                    throw new Error(`${detail} (Mã lỗi: ${response.status})`);
                 }
 
                 showToast("Đã cập nhật thông tin thành công!", "success");
@@ -525,7 +545,7 @@
 
             } catch (err) {
                 console.error(err);
-                showToast("Lỗi: " + err.message, "danger");
+                showToast("Lỗi lưu đơn: " + err.message, "danger");
             } finally {
                 btnSave.disabled = false;
                 btnSave.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Lưu thay đổi</span>`;
@@ -566,7 +586,9 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("Không thể xóa dòng trên máy chủ Baserow!");
+                    const errData = await response.json().catch(() => ({}));
+                    const detail = errData.detail || errData.error || "Không rõ nguyên nhân";
+                    throw new Error(`${detail} (Mã lỗi: ${response.status})`);
                 }
 
                 showToast("Xóa bản ghi dữ liệu thành công!", "success");

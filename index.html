@@ -34,7 +34,7 @@
 </head>
 <body class="h-full flex flex-col overflow-hidden text-slate-800 font-sans">
 
-    <!-- TOP HEADER (Đã loại bỏ nút Chẩn đoán lỗi API thừa) -->
+    <!-- TOP HEADER -->
     <header class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0 shadow-md">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
@@ -91,8 +91,23 @@
         </div>
 
         <!-- VISUAL GRID LIST (Scrollable) -->
-        <main class="flex-1 overflow-y-auto p-6 bg-slate-50">
+        <main class="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-6">
             
+            <!-- ⚡ HỆ THỐNG CHỐT SỔ & GIẢI PHÓNG BỘ NHỚ LƯU TRỮ TRÊN BASEROW CLOUD -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="space-y-1">
+                    <h3 class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+                        <i data-lucide="archive" class="w-4 h-4 text-indigo-600"></i>
+                        <span>Kho Lưu Trữ & Chốt Sổ Kỳ Tháng</span>
+                    </h3>
+                    <p class="text-xs text-slate-500">Tự động gom đơn bán giày chi tiết tháng cũ thành con số doanh thu duy nhất và giải phóng 100% dung lượng ảnh bán.</p>
+                </div>
+                <button onclick="archiveAndClearPastMonths()" id="btn-archive" class="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-md shadow-indigo-100">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                    <span>Chốt Sổ & Dọn Dẹp Tháng Cũ</span>
+                </button>
+            </div>
+
             <!-- LOADING STATE -->
             <div id="loading-state" class="flex flex-col items-center justify-center py-24 space-y-3">
                 <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -265,6 +280,8 @@
                 const card = document.createElement('div');
                 card.className = "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col";
 
+                const isSummary = row["Số điện thoại"] === 'SYSTEM_SUMMARY';
+
                 if (currentTab === 'mua-giay') {
                     const thoiGian = formatDate(row["Thời gian"]);
                     const tenKhach = row["Tên khách"] || "Chưa có tên";
@@ -276,10 +293,10 @@
                     const urlAnhBill = row["Link ảnh Bill"]?.[0]?.url || "";
 
                     card.innerHTML = `
-                        <div class="relative h-48 bg-slate-100 overflow-hidden cursor-pointer group" onclick="openLightbox('${urlAnhGiay || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80'}')">
-                            <img src="${urlAnhGiay || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="relative h-48 bg-slate-100 overflow-hidden cursor-pointer group" onclick="openLightbox('${urlAnhGiay || 'https://placehold.co/600x400/eceff1/475569?text=ChotSoKỳThang'}')">
+                            <img src="${urlAnhGiay || 'https://placehold.co/600x400/e0e7ff/4f46e5?text=ChotSoDoanhThu'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3 text-white">
-                                <span class="bg-indigo-600 text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">ĐƠN BÁN GIÀY</span>
+                                <span class="${isSummary ? 'bg-amber-500' : 'bg-indigo-600'} text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">${isSummary ? 'CHỐT SỔ KỲ THÁNG' : 'ĐƠN BÁN GIÀY'}</span>
                             </div>
                         </div>
                         <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
@@ -289,7 +306,7 @@
                                     <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">${hinhThuc}</span>
                                 </div>
                                 <h3 class="text-sm font-black text-slate-950">${tenGiay}</h3>
-                                <p class="text-xs text-slate-500">Khách: <b>${tenKhach}</b> (${sdt})</p>
+                                <p class="text-xs text-slate-500">Khách: <b>${tenKhach}</b> ${isSummary ? '' : `(${sdt})`}</p>
                                 <div class="text-lg font-black text-slate-900 pt-1">${formatMoney(giaBan)}</div>
                             </div>
                             <div class="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
@@ -613,6 +630,98 @@
 
         function closeLightbox() {
             document.getElementById('lightbox-modal').classList.add('hidden');
+        }
+
+        // --- ⚡ THUẬT TOÁN CHỐT SỔ TỰ ĐỘNG THÔNG MINH - CHỈ DO BẠN HOÀNG ĐIỀU KHIỂN ---
+        async function archiveAndClearPastMonths() {
+            if (currentTab !== 'mua-giay') {
+                showToast("Tính năng chốt sổ chỉ áp dụng cho mảng Bán Giày!", "warning");
+                return;
+            }
+
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            // 1. Phân loại tìm các đơn hàng thuộc tháng cũ
+            const oldDetailedRows = rawData.filter(row => {
+                const d = new Date(row["Thời gian"]);
+                const isSummary = row["Số điện thoại"] === 'SYSTEM_SUMMARY';
+                // Điều kiện: tháng cũ hơn và không phải dòng chốt sổ hệ thống đã lưu
+                return !isSummary && (d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() < currentMonth));
+            });
+
+            if (oldDetailedRows.length === 0) {
+                showToast("Hiện tại không có đơn bán giày thuộc tháng cũ nào cần dọn dẹp!", "success");
+                return;
+            }
+
+            const btnArchive = document.getElementById('btn-archive');
+            btnArchive.disabled = true;
+            btnArchive.innerHTML = "Đang gom doanh thu...";
+
+            // Group old rows by Month/Year
+            let groupOldMonths = {};
+            oldDetailedRows.forEach(row => {
+                const d = new Date(row["Thời gian"]);
+                const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+                if (!groupOldMonths[key]) groupOldMonths[key] = { rows: [], total: 0, year: d.getFullYear(), month: d.getMonth() };
+                groupOldMonths[key].rows.push(row);
+                groupOldMonths[key].total += Number(row["Giá bán"]) || 0;
+            });
+
+            showToast(`Phát hiện ${Object.keys(groupOldMonths).length} kỳ tháng cũ cần chốt. Bắt đầu xử lý...`, "warning");
+
+            try {
+                for (const [monthKey, data] of Object.entries(groupOldMonths)) {
+                    // Bước A: Gửi 1 dòng chốt sổ duy nhất lên Baserow (Không gửi ảnh để tiết kiệm bộ nhớ)
+                    const firstDayOfMonth = new Date(data.year, data.month, 1, 12, 0, 0).toISOString();
+                    
+                    const payload = {
+                        "Thời gian": firstDayOfMonth,
+                        "Tên khách": `TỔNG KẾT DOANH THU THÁNG ${monthKey}`,
+                        "Số điện thoại": "SYSTEM_SUMMARY",
+                        "Tên giày": "Hệ thống đã chốt sổ kỳ tháng cũ",
+                        "Giá bán": Number(data.total),
+                        "Hình thức": "Tiền mặt",
+                        "Tổng thanh toán đơn": Number(data.total),
+                        "Link ảnh Bill": [], // KHÔNG LƯU ẢNH BILL CŨ
+                        "Link ảnh giày": []  // KHÔNG LƯU ẢNH GIÀY CŨ
+                    };
+
+                    const postRes = await fetch(`https://api.baserow.io/api/database/rows/table/${DB_CONFIG.tableMua}/?user_field_names=true`, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Token ${DB_CONFIG.token}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!postRes.ok) throw new Error(`Lỗi tạo dòng chốt sổ tháng ${monthKey}`);
+
+                    // Bước B: Xóa hàng loạt các đơn chi tiết của tháng cũ đó để giải phóng bộ nhớ
+                    btnArchive.innerHTML = `Đang dọn dẹp tháng ${monthKey}...`;
+                    for (const oldRow of data.rows) {
+                        const delRes = await fetch(`https://api.baserow.io/api/database/rows/table/${DB_CONFIG.tableMua}/${oldRow.id}/`, {
+                            method: "DELETE",
+                            headers: { "Authorization": `Token ${DB_CONFIG.token}` }
+                        });
+                        if (!delRes.ok) console.warn(`Không thể xóa dòng chi tiết có ID ${oldRow.id}`);
+                    }
+                }
+
+                showToast("Đã chốt sổ và giải phóng bộ nhớ thành công rực rỡ!", "success");
+                await fetchAllData();
+
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi chốt sổ: " + err.message, "danger");
+            } finally {
+                btnArchive.disabled = false;
+                btnArchive.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>Chốt Sổ & Dọn Dẹp Tháng Cũ</span>`;
+                lucide.createIcons();
+            }
         }
 
         function formatMoney(amount) {

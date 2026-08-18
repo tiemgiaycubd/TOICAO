@@ -30,6 +30,12 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        /* Ẩn hoàn toàn mũi tên tăng giảm của thẻ input number (phòng hờ) */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
     </style>
 </head>
 <body class="h-full flex flex-col overflow-hidden text-slate-800 font-sans">
@@ -47,40 +53,16 @@
         </div>
         
         <div class="flex items-center space-x-3">
-            <!-- Trạng thái kết nối -->
             <div class="hidden sm:flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
                 <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span class="text-xs font-semibold text-slate-300">Đồng bộ Baserow Cloud</span>
+                <span class="text-xs font-semibold text-slate-300">Đồng bộ Baserow Cloud & Firebase</span>
             </div>
             
-            <!-- Nút đồng bộ -->
             <button onclick="fetchAllData()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-white transition flex items-center justify-center group" title="Đồng bộ dữ liệu thực tế">
                 <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-500"></i>
             </button>
         </div>
     </header>
-
-    <!-- ⚡ THANH CHỐT SỔ HỆ THỐNG AN TOÀN ĐỘC LẬP (Đặt riêng biệt phía trên tránh tuyệt đối bấm lộn) -->
-    <div class="bg-amber-50 border-b border-amber-200 p-4 shrink-0">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div class="flex items-start space-x-3">
-                <div class="p-2 bg-amber-100 text-amber-700 rounded-xl mt-0.5 shrink-0">
-                    <i data-lucide="archive" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm font-black text-amber-950">Khu Vực Chốt Sổ & Giải Phóng Bộ Nhớ Baserow Cloud</h3>
-                    <p class="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                        Tự động gom đơn bán giày cũ chi tiết thành con số doanh thu duy nhất và giải phóng 100% dung lượng ảnh bán cũ để dọn sạch bộ nhớ. 
-                        <span class="font-extrabold text-amber-900 underline">Dữ liệu Giặt giày của tiệm giữ nguyên vẹn 100% không đụng tới.</span>
-                    </p>
-                </div>
-            </div>
-            <button onclick="archiveAndClearPastMonths()" id="btn-archive" class="w-full sm:w-auto px-5 py-3 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-xl text-xs font-bold transition duration-200 flex items-center justify-center space-x-2 shadow-md shadow-amber-100 shrink-0">
-                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-                <span>Bắt Đầu Chốt Sổ Tháng Cũ</span>
-            </button>
-        </div>
-    </div>
 
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
@@ -88,37 +70,51 @@
     <!-- MAIN BODY -->
     <div class="flex-1 flex flex-col overflow-hidden">
         
-        <!-- CONTROL BAR (Filters & Navigation) -->
+        <!-- CONTROL BAR (Tabs, Sắp xếp & Tìm kiếm) -->
         <div class="bg-white border-b border-slate-200 p-4 shrink-0 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <!-- Tab switch -->
-            <div class="flex space-x-1.5 p-1 bg-slate-100 rounded-xl self-start">
-                <button onclick="switchAdminTab('mua-giay')" id="tab-admin-mua" class="flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm bg-white text-indigo-600">
+            <div class="flex space-x-1.5 p-1 bg-slate-100 rounded-xl self-start overflow-x-auto no-scrollbar">
+                <button onclick="switchAdminTab('mua-giay')" id="tab-admin-mua" class="flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm bg-white text-indigo-600 whitespace-nowrap">
                     <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-                    <span>Khách Mua Giày (Table 1012082)</span>
+                    <span>Khách Mua Giày</span>
                 </button>
-                <button onclick="switchAdminTab('giat-giay')" id="tab-admin-giat" class="flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-indigo-600">
+                <button onclick="switchAdminTab('giat-giay')" id="tab-admin-giat" class="flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-indigo-600 whitespace-nowrap">
                     <i data-lucide="waves" class="w-4 h-4"></i>
-                    <span>Khách Giặt Giày (Table 1012088)</span>
+                    <span>Khách Giặt Giày</span>
+                </button>
+                <button onclick="switchAdminTab('loi-nhuan')" id="tab-admin-loi-nhuan" class="flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-indigo-600 whitespace-nowrap">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+                    <span>Lợi Nhuận (Firebase)</span>
                 </button>
             </div>
 
-            <!-- Search bar -->
-            <div class="relative max-w-md w-full">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                </span>
-                <input type="text" id="admin-search" oninput="filterDataGrid()" placeholder="Tìm nhanh SĐT, tên khách, hoặc tên giày..." 
-                       class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-200">
+            <!-- Controls (Sort, Add & Search) -->
+            <div class="flex items-center space-x-2 w-full max-w-lg" id="admin-controls-wrapper">
+                <button id="btn-add-manual" onclick="openAddManualModal()" class="hidden px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition items-center space-x-1 shrink-0">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Thêm Mới</span>
+                </button>
+                <select id="sort-order" onchange="renderCards(rawData)" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-600">
+                    <option value="newest">Mới nhất trước</option>
+                    <option value="oldest">Cũ nhất trước</option>
+                </select>
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </span>
+                    <input type="text" id="admin-search" oninput="filterDataGrid()" placeholder="Tìm nhanh..." 
+                           class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition duration-200">
+                </div>
             </div>
         </div>
 
-        <!-- VISUAL GRID LIST (Scrollable) -->
+        <!-- VISUAL GRID / TABLE LIST (Scrollable) -->
         <main class="flex-1 overflow-y-auto p-6 bg-slate-50">
             
             <!-- LOADING STATE -->
             <div id="loading-state" class="flex flex-col items-center justify-center py-24 space-y-3">
                 <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-sm font-semibold text-slate-500">Đang kéo dữ liệu từ đám mây Baserow...</p>
+                <p class="text-sm font-semibold text-slate-500">Đang kéo dữ liệu từ đám mây...</p>
             </div>
 
             <!-- EMPTY STATE -->
@@ -127,21 +123,72 @@
                     <i data-lucide="folder-open" class="w-8 h-8"></i>
                 </div>
                 <h3 class="text-base font-bold text-slate-900">Không tìm thấy bản ghi nào</h3>
-                <p class="text-xs text-slate-500 mt-1">Dữ liệu trên Baserow đang trống hoặc từ khóa tìm kiếm không khớp.</p>
+                <p class="text-xs text-slate-500 mt-1">Dữ liệu đang trống hoặc từ khóa tìm kiếm không khớp.</p>
             </div>
 
-            <!-- DATA CARDS CONTAINER -->
-            <div id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Javascript renders cards -->
+            <!-- ANALYTICS SUMMARY PANEL (Dành riêng cho Tab Lợi Nhuận) -->
+            <div id="analytics-panel" class="hidden grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-indigo-600 rounded-2xl p-4 text-white shadow-md">
+                    <p class="text-xs text-indigo-200 font-medium uppercase tracking-wider">Tổng Doanh Thu</p>
+                    <h3 id="stat-revenue" class="text-2xl font-black mt-1">0đ</h3>
+                </div>
+                <div class="bg-rose-500 rounded-2xl p-4 text-white shadow-md">
+                    <p class="text-xs text-rose-200 font-medium uppercase tracking-wider">Tổng Giá Vốn</p>
+                    <h3 id="stat-cost" class="text-2xl font-black mt-1">0đ</h3>
+                </div>
+                <div class="bg-emerald-500 rounded-2xl p-4 text-white shadow-md">
+                    <p class="text-xs text-emerald-200 font-medium uppercase tracking-wider">Lợi Nhuận Ròng</p>
+                    <h3 id="stat-profit" class="text-2xl font-black mt-1">0đ</h3>
+                </div>
             </div>
+
+            <!-- DATA CARDS CONTAINER / TABLE CONTAINER -->
+            <div id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
 
         </main>
     </div>
 
+    <!-- MODAL THÊM MỚI THỦ CÔNG LỢI NHUẬN -->
+    <div id="add-manual-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-400"></i>
+                    <h3 class="font-bold text-sm uppercase tracking-wide">Thêm Doanh Thu / Lợi Nhuận</h3>
+                </div>
+                <button onclick="closeAddManualModal()" class="p-1 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="submitManualProfit(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">Tên giày / Sản phẩm *</label>
+                    <input type="text" id="manual-tengiay" required placeholder="Ví dụ: Nike Air Force 1" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Giá bán (VND) *</label>
+                        <input type="text" id="manual-giaban" required placeholder="Ví dụ: 650" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 mb-1">Giá vốn (VND) *</label>
+                        <input type="text" id="manual-giavon" required placeholder="Ví dụ: 300" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeAddManualModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition text-sm">Hủy</button>
+                    <button type="submit" id="btn-save-manual" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition text-sm flex items-center space-x-1">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Lưu Lại</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODERN EDIT PANEL -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-            <!-- Modal Header -->
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <i data-lucide="edit-3" class="w-5 h-5 text-indigo-400"></i>
@@ -152,24 +199,22 @@
                 </button>
             </div>
 
-            <!-- Modal Content -->
             <form id="edit-form" onsubmit="submitEditForm(event)" class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
                 <input type="hidden" id="edit-row-id">
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Tên khách hàng *</label>
-                        <input type="text" id="edit-ten" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition">
+                        <input type="text" id="edit-ten" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
                     </div>
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Số điện thoại *</label>
-                        <input type="tel" id="edit-sdt" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white transition">
+                        <input type="tel" id="edit-sdt" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
                     </div>
                 </div>
 
                 <div id="edit-dynamic-fields" class="space-y-4"></div>
 
-                <!-- Form Buttons -->
                 <div class="flex justify-end space-x-2 pt-4 border-t border-slate-100">
                     <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition text-sm">Hủy bỏ</button>
                     <button type="submit" id="btn-save-edit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition text-sm flex items-center space-x-1">
@@ -183,13 +228,13 @@
 
     <!-- CUSTOM CONFIRMATION DIALOG -->
     <div id="confirm-delete-dialog" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-slate-100 text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-slate-100 text-center space-y-4">
             <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
                 <i data-lucide="alert-triangle" class="w-8 h-8"></i>
             </div>
             <div class="space-y-1">
                 <h3 class="font-bold text-slate-900 text-base">Xác nhận xóa vĩnh viễn?</h3>
-                <p class="text-xs text-slate-500 leading-relaxed">Hành động này sẽ xóa dữ liệu trực tiếp khỏi máy chủ Baserow và không thể khôi phục lại.</p>
+                <p class="text-xs text-slate-500 leading-relaxed">Hành động này sẽ xóa dữ liệu trực tiếp khỏi máy chủ và không thể khôi phục.</p>
             </div>
             <div class="grid grid-cols-2 gap-3 pt-2">
                 <button onclick="closeDeleteDialog()" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition text-xs">Hủy</button>
@@ -206,15 +251,38 @@
         </button>
     </div>
 
+    <!-- FIREBASE SDK (Module) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWRBa3-QI8QG6kfP2J_qzgbpDz2_GJPp8",
+            authDomain: "doanhthu-73ade.firebaseapp.com",
+            projectId: "doanhthu-73ade",
+            storageBucket: "doanhthu-73ade.firebasestorage.app",
+            messagingSenderId: "449682329782",
+            appId: "1:449682329782:web:94974d346a4b49f8651617"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.firebaseDb = db;
+        window.fbGetDocs = getDocs;
+        window.fbCollection = collection;
+        window.fbDoc = doc;
+        window.fbUpdateDoc = updateDoc;
+        window.fbDeleteDoc = deleteDoc;
+        window.fbAddDoc = addDoc;
+    </script>
+
     <!-- CORE SCRIPTS -->
     <script>
         const DB_CONFIG = {
             token: 'NiWMS76P9sn2yP76BS53dgiikbc76utz',
-            dbId: '459127',
             tableMua: '1012082',
-            tableGiat: '1012088',
-            telegramToken: '8965725827:AAHfHSqjLAmspcMVRayZI8buJVN6MNJMEqs',
-            telegramChat: '8511070091'
+            tableGiat: '1012088'
         };
 
         let currentTab = 'mua-giay';
@@ -226,12 +294,23 @@
             fetchAllData();
         };
 
-        // HÀM CHUYỂN ĐỔI CHỮ VIẾT TẮT GIÁ TIỀN (AUTO 000)
         function handleAdminPriceBlur(input) {
             let val = parseInt(input.value) || 0;
             if (val > 0 && val < 10000) {
                 input.value = val * 1000;
             }
+        }
+
+        async function fetchAllPages(url) {
+            let results = []; let nextUrl = url;
+            while(nextUrl) {
+                const res = await fetch(nextUrl, { headers: { "Authorization": `Token ${DB_CONFIG.token}` } });
+                if (!res.ok) throw new Error("Lỗi fetch dữ liệu Baserow");
+                const data = await res.json();
+                results = results.concat(data.results);
+                nextUrl = data.next;
+            }
+            return results;
         }
 
         async function fetchAllData() {
@@ -242,20 +321,26 @@
             grid.innerHTML = "";
             loading.classList.remove('hidden');
             empty.classList.add('hidden');
-
-            const tableId = currentTab === 'mua-giay' ? DB_CONFIG.tableMua : DB_CONFIG.tableGiat;
+            document.getElementById('analytics-panel').classList.add('hidden');
+            document.getElementById('admin-controls-wrapper').classList.remove('hidden');
+            document.getElementById('btn-add-manual').classList.add('hidden');
 
             try {
-                const response = await fetch(`https://api.baserow.io/api/database/rows/table/${tableId}/?user_field_names=true&size=200`, {
-                    headers: { "Authorization": `Token ${DB_CONFIG.token}` }
-                });
-
-                if (!response.ok) {
-                    throw new Error("Không thể liên kết với API Baserow!");
+                if (currentTab === 'mua-giay' || currentTab === 'giat-giay') {
+                    const tableId = currentTab === 'mua-giay' ? DB_CONFIG.tableMua : DB_CONFIG.tableGiat;
+                    rawData = await fetchAllPages(`https://api.baserow.io/api/database/rows/table/${tableId}/?user_field_names=true&size=200`);
+                } else if (currentTab === 'loi-nhuan') {
+                    document.getElementById('btn-add-manual').classList.remove('hidden');
+                    if (window.firebaseDb && window.fbGetDocs && window.fbCollection) {
+                        const querySnapshot = await window.fbGetDocs(window.fbCollection(window.firebaseDb, "doanhthu"));
+                        rawData = [];
+                        querySnapshot.forEach((docSnap) => {
+                            rawData.push({ id: docSnap.id, ...docSnap.data() });
+                        });
+                    } else {
+                        rawData = [];
+                    }
                 }
-
-                const data = await response.json();
-                rawData = data.results || [];
 
                 renderCards(rawData);
                 showToast("Đồng bộ dữ liệu thành công!", "success");
@@ -276,55 +361,171 @@
 
             if (items.length === 0) {
                 empty.classList.remove('hidden');
+                document.getElementById('analytics-panel').classList.add('hidden');
                 return;
             }
 
             empty.classList.add('hidden');
 
-            // CHỐT: SẮP XẾP ĐƠN MỚI LÊN ĐẦU TIÊN (Theo ID giảm dần)
-            const sortedItems = [...items].sort((a, b) => b.id - a.id);
+            if (currentTab === 'loi-nhuan') {
+                document.getElementById('analytics-panel').classList.remove('hidden');
+                document.getElementById('analytics-panel').classList.add('grid');
 
-            sortedItems.forEach(row => {
-                const card = document.createElement('div');
-                card.className = "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col";
+                let totalRev = 0;
+                let totalCost = 0;
+                const sortOrder = document.getElementById('sort-order')?.value || 'newest';
+                let sortedItems = [...items].sort((a, b) => {
+                    const timeA = new Date(a.thoiGian || 0);
+                    const timeB = new Date(b.thoiGian || 0);
+                    return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
+                });
 
-                const isSummary = row["Số điện thoại"] === 'SYSTEM_SUMMARY';
+                grid.className = "bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden col-span-full";
+                
+                let tableHtml = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+                                    <th class="p-4">Thời gian</th>
+                                    <th class="p-4">Tên giày / Sản phẩm</th>
+                                    <th class="p-4 text-right">Giá bán</th>
+                                    <th class="p-4 text-right">Giá vốn</th>
+                                    <th class="p-4 text-right">Lợi nhuận ròng</th>
+                                    <th class="p-4 text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                `;
 
-                if (currentTab === 'mua-giay') {
-                    const thoiGian = formatDate(row["Thời gian"]);
-                    const tenKhach = row["Tên khách"] || "Chưa có tên";
-                    const sdt = row["Số điện thoại"] || "Trống SĐT";
-                    const tenGiay = row["Tên giày"] || "Không rõ tên giày";
-                    const giaBan = Number(row["Giá bán"]) || 0;
-                    const hinhThuc = row["Hình thức"]?.value || row["Hình thức"] || "Chưa chọn";
-                    const urlAnhGiay = row["Link ảnh giày"]?.[0]?.url || "";
-                    const urlAnhBill = row["Link ảnh Bill"]?.[0]?.url || "";
+                sortedItems.forEach(row => {
+                    const giaBan = Number(row.giaBan) || 0;
+                    const giaVon = Number(row.giaVon) || 0;
+                    totalRev += giaBan;
+                    totalCost += giaVon;
+                    let loiNhuan = giaBan - giaVon;
 
-                    card.innerHTML = `
-                        <div class="relative h-48 bg-slate-100 overflow-hidden cursor-pointer group" onclick="openLightbox('${urlAnhGiay || 'https://placehold.co/600x400/eceff1/475569?text=ChotSoKyThang'}')">
-                            <img src="${urlAnhGiay || 'https://placehold.co/600x400/e0e7ff/4f46e5?text=ChotSoDoanhThu'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3 text-white">
-                                <span class="${isSummary ? 'bg-amber-500' : 'bg-indigo-600'} text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">${isSummary ? 'CHỐT SỔ KỲ THÁNG' : 'ĐƠN BÁN GIÀY'}</span>
-                            </div>
-                        </div>
-                        <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
-                            <div class="space-y-1.5">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] text-slate-400 font-bold">${thoiGian}</span>
-                                    <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">${hinhThuc}</span>
-                                </div>
-                                <h3 class="text-sm font-black text-slate-950">${tenGiay}</h3>
-                                <p class="text-xs text-slate-500">Khách: <b>${tenKhach}</b> ${isSummary ? '' : `(${sdt})`}</p>
-                                <div class="text-lg font-black text-slate-900 pt-1">${formatMoney(giaBan)}</div>
-                            </div>
-                            <div class="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
-                                ${urlAnhBill ? `
-                                    <button onclick="openLightbox('${urlAnhBill}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[10px] font-bold text-slate-600 transition flex items-center space-x-1">
-                                        <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
-                                        <span>Xem Bill</span>
+                    tableHtml += `
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="p-4 text-xs text-slate-500 whitespace-nowrap">${formatDate(row.thoiGian)}</td>
+                            <td class="p-4 font-bold text-slate-900">${row.tenGiay || "Không có tên"}</td>
+                            <td class="p-4 text-right font-black text-indigo-600">${formatMoney(giaBan)}</td>
+                            <td class="p-4 text-right">
+                                <div class="inline-flex items-center space-x-1.5 justify-end">
+                                    <input type="text" id="giavon-${row.id}" value="${giaVon}" onblur="handleAdminPriceBlur(this)" class="w-28 px-2 py-1 border border-slate-200 rounded-lg text-xs text-right font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-slate-50">
+                                    <button id="btn-save-von-${row.id}" onclick="saveGiaVonFirebase('${row.id}', 'giavon-${row.id}', 'btn-save-von-${row.id}')" class="bg-indigo-600 text-white p-1.5 rounded-lg hover:bg-indigo-700 transition" title="Lưu giá vốn">
+                                        <i data-lucide="save" class="w-3.5 h-3.5"></i>
                                     </button>
-                                ` : '<div class="flex-1"></div>'}
-                                <div class="flex space-x-1.5">
+                                </div>
+                            </td>
+                            <td class="p-4 text-right font-black ${loiNhuan >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatMoney(loiNhuan)}</td>
+                            <td class="p-4 text-center">
+                                <button onclick="openDeleteDialog('${row.id}')" class="p-2 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg transition" title="Xóa vĩnh viễn">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `</tbody></table></div>`;
+                grid.innerHTML = tableHtml;
+
+                document.getElementById('stat-revenue').innerText = formatMoney(totalRev);
+                document.getElementById('stat-cost').innerText = formatMoney(totalCost);
+                document.getElementById('stat-profit').innerText = formatMoney(totalRev - totalCost);
+
+            } else {
+                document.getElementById('analytics-panel').classList.add('hidden');
+                grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6";
+                const sortOrder = document.getElementById('sort-order').value;
+                let sortedItems = [...items].sort((a, b) => sortOrder === 'newest' ? b.id - a.id : a.id - b.id);
+
+                sortedItems.forEach(row => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 flex flex-col";
+
+                    if (currentTab === 'mua-giay') {
+                        const thoiGian = formatDate(row["Thời gian"]);
+                        const tenKhach = row["Tên khách"] || "Chưa có tên";
+                        const sdt = row["Số điện thoại"] || "Trống SĐT";
+                        const tenGiay = row["Tên giày"] || "Không rõ tên giày";
+                        const giaBan = Number(row["Giá bán"]) || 0;
+                        const hinhThuc = row["Hình thức"]?.value || row["Hình thức"] || "Chưa chọn";
+                        const urlAnhGiay = row["Link ảnh giày"]?.[0]?.url || "";
+                        const urlAnhBill = row["Link ảnh Bill"]?.[0]?.url || "";
+
+                        card.innerHTML = `
+                            <div class="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden cursor-pointer group" onclick="openLightbox('${urlAnhGiay || 'https://placehold.co/600x400/eceff1/475569?text=GiayCuBinhDuong'}')">
+                                <img src="${urlAnhGiay || 'https://placehold.co/600x400/e0e7ff/4f46e5?text=GiayCu'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3 text-white">
+                                    <span class="bg-indigo-600 text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">ĐƠN BÁN GIÀY</span>
+                                </div>
+                            </div>
+                            <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] text-slate-400 font-bold">${thoiGian}</span>
+                                        <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">${hinhThuc}</span>
+                                    </div>
+                                    <h3 class="text-sm font-black text-slate-950">${tenGiay}</h3>
+                                    <p class="text-xs text-slate-500">Khách: <b>${tenKhach}</b> (${sdt})</p>
+                                    <div class="text-lg font-black text-slate-900 pt-1">${formatMoney(giaBan)}</div>
+                                </div>
+                                <div class="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
+                                    ${urlAnhBill ? `
+                                        <button onclick="openLightbox('${urlAnhBill}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[10px] font-bold text-slate-600 transition flex items-center space-x-1">
+                                            <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                                            <span>Xem Bill</span>
+                                        </button>
+                                    ` : '<div class="flex-1"></div>'}
+                                    <div class="flex space-x-1.5">
+                                        <button onclick="openEditModal(${row.id})" class="p-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 text-slate-600 rounded-xl transition" title="Sửa đơn">
+                                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="openDeleteDialog(${row.id})" class="p-2 bg-slate-50 hover:bg-red-50 hover:text-red-600 border border-slate-200 text-slate-600 rounded-xl transition" title="Xóa đơn">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        const thoiGian = formatDate(row["Thời gian"]);
+                        const tenKhach = row["Tên khách hàng"] || "Chưa có tên";
+                        const sdt = row["Số điện thoại"] || "Trống SĐT";
+                        const dichVu = row["Dịch vụ"] || "Dịch vụ giặt giày";
+                        const trangThaiThanhToan = row["Trạng thái thanh toán"]?.value || row["Trạng thái thanh toán"] || "Chưa thanh toán";
+                        const trangThaiXuLy = row["Trạng thái xử lý"]?.value || row["Trạng thái xử lý"] || "Đang xử lý";
+                        const urlAnhGiayGiat = row["Link ảnh giày giặt"]?.[0]?.url || "";
+
+                        let paymentBadge = "bg-red-50 text-red-600 border border-red-200";
+                        if (trangThaiThanhToan.startsWith("Đã thanh toán")) paymentBadge = "bg-emerald-50 text-emerald-600 border border-emerald-200";
+                        if (trangThaiThanhToan.startsWith("Cọc")) paymentBadge = "bg-amber-50 text-amber-600 border-amber-200";
+
+                        let processBadge = "bg-amber-500 text-white";
+                        if (trangThaiXuLy === "Đã hoàn tất") processBadge = "bg-emerald-500 text-white";
+
+                        card.innerHTML = `
+                            <div class="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden cursor-pointer group" onclick="openLightbox('${urlAnhGiayGiat || 'https://placehold.co/600x400/eceff1/475569?text=GiatGiay'}')">
+                                <img src="${urlAnhGiayGiat || 'https://placehold.co/600x400/e0e7ff/4f46e5?text=GiatGiay'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3 text-white">
+                                    <span class="bg-cyan-600 text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">ĐƠN GIẶT GIÀY</span>
+                                </div>
+                            </div>
+                            <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] text-slate-400 font-bold">${thoiGian}</span>
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${paymentBadge}">${trangThaiThanhToan}</span>
+                                    </div>
+                                    <h3 class="text-sm font-black text-slate-950">${dichVu}</h3>
+                                    <p class="text-xs text-slate-500">Khách: <b>${tenKhach}</b> (${sdt})</p>
+                                    <div class="flex items-center justify-end pt-1">
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md ${processBadge}">${trangThaiXuLy}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-end pt-3 border-t border-slate-100 gap-2">
                                     <button onclick="openEditModal(${row.id})" class="p-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 text-slate-600 rounded-xl transition" title="Sửa đơn">
                                         <i data-lucide="edit-2" class="w-4 h-4"></i>
                                     </button>
@@ -333,61 +534,91 @@
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                } else {
-                    const thoiGian = formatDate(row["Thời gian"]);
-                    const tenKhach = row["Tên khách hàng"] || "Chưa có tên";
-                    const sdt = row["Số điện thoại"] || "Trống SĐT";
-                    const dichVu = row["Dịch vụ"] || "Dịch vụ giặt giày";
-                    const chiPhi = Number(row["Chi phí"]) || 0;
-                    const trangThaiThanhToan = row["Trạng thái thanh toán"]?.value || row["Trạng thái thanh toán"] || "Chưa thanh toán";
-                    const trangThaiXuLy = row["Trạng thái xử lý"]?.value || row["Trạng thái xử lý"] || "Đang xử lý";
-                    const urlAnhGiayGiat = row["Link ảnh giày giặt"]?.[0]?.url || "";
+                        `;
+                    }
 
-                    let paymentBadge = "bg-red-50 text-red-600 border border-red-200";
-                    if (trangThaiThanhToan.startsWith("Đã thanh toán")) paymentBadge = "bg-emerald-50 text-emerald-600 border border-emerald-200";
-                    if (trangThaiThanhToan.startsWith("Cọc")) paymentBadge = "bg-amber-50 text-amber-600 border-amber-200";
-
-                    let processBadge = "bg-amber-500 text-white";
-                    if (trangThaiXuLy === "Đã hoàn tất") processBadge = "bg-emerald-500 text-white";
-
-                    card.innerHTML = `
-                        <div class="relative h-48 bg-slate-100 overflow-hidden cursor-pointer group" onclick="openLightbox('${urlAnhGiayGiat || 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80'}')">
-                            <img src="${urlAnhGiayGiat || 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-3 text-white">
-                                <span class="bg-cyan-600 text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider">ĐƠN GIẶT GIÀY</span>
-                            </div>
-                        </div>
-                        <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
-                            <div class="space-y-1.5">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[10px] text-slate-400 font-bold">${thoiGian}</span>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${paymentBadge}">${trangThaiThanhToan}</span>
-                                </div>
-                                <h3 class="text-sm font-black text-slate-950">${dichVu}</h3>
-                                <p class="text-xs text-slate-500">Khách: <b>${tenKhach}</b> (${sdt})</p>
-                                <div class="flex items-center justify-between pt-1">
-                                    <div class="text-sm font-black text-slate-800">${chiPhi > 0 ? `Chi phí: ${formatMoney(chiPhi)}` : 'Chi phí: Chưa báo'}</div>
-                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md ${processBadge}">${trangThaiXuLy}</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-end pt-3 border-t border-slate-100 gap-2">
-                                <button onclick="openEditModal(${row.id})" class="p-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 text-slate-600 rounded-xl transition" title="Sửa đơn">
-                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
-                                </button>
-                                <button onclick="openDeleteDialog(${row.id})" class="p-2 bg-slate-50 hover:bg-red-50 hover:text-red-600 border border-slate-200 text-slate-600 rounded-xl transition" title="Xóa đơn">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                grid.appendChild(card);
-            });
+                    grid.appendChild(card);
+                });
+            }
 
             lucide.createIcons();
+        }
+
+        window.saveGiaVonFirebase = async function(docId, inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(btnId);
+            let giaVon = parseInt(input.value) || 0;
+            if (giaVon > 0 && giaVon < 10000) {
+                giaVon = giaVon * 1000;
+                input.value = giaVon;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i>`;
+
+            try {
+                if (window.firebaseDb && window.fbDoc && window.fbUpdateDoc) {
+                    const docRef = window.fbDoc(window.firebaseDb, "doanhthu", docId);
+                    await window.fbUpdateDoc(docRef, { giaVon: Number(giaVon) });
+                    showToast("Đã lưu giá vốn thành công!", "success");
+                    await fetchAllData();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi lưu giá vốn: " + err.message, "danger");
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="save" class="w-3.5 h-3.5"></i>`;
+                lucide.createIcons();
+            }
+        };
+
+        function openAddManualModal() {
+            document.getElementById('add-manual-modal').classList.remove('hidden');
+            document.getElementById('add-manual-modal').classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeAddManualModal() {
+            document.getElementById('add-manual-modal').classList.add('hidden');
+            document.getElementById('add-manual-modal').classList.remove('flex');
+        }
+
+        async function submitManualProfit(e) {
+            e.preventDefault();
+            const btnSave = document.getElementById('btn-save-manual');
+            const tenGiay = document.getElementById('manual-tengiay').value.trim();
+            let giaBan = Number(document.getElementById('manual-giaban').value.trim()) || 0;
+            let giaVon = Number(document.getElementById('manual-giavon').value.trim()) || 0;
+
+            if (giaBan > 0 && giaBan < 10000) giaBan *= 1000;
+            if (giaVon > 0 && giaVon < 10000) giaVon *= 1000;
+
+            btnSave.disabled = true;
+            btnSave.innerHTML = "Đang lưu...";
+
+            try {
+                if (window.firebaseDb && window.fbAddDoc && window.fbCollection) {
+                    await window.fbAddDoc(window.fbCollection(window.firebaseDb, "doanhthu"), {
+                        tenGiay: tenGiay,
+                        giaBan: Number(giaBan),
+                        giaVon: Number(giaVon),
+                        thoiGian: new Date().toISOString()
+                    });
+                    showToast("Thêm mới doanh thu thành công!", "success");
+                    closeAddManualModal();
+                    document.getElementById('manual-tengiay').value = "";
+                    document.getElementById('manual-giaban').value = "";
+                    document.getElementById('manual-giavon').value = "";
+                    await fetchAllData();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi thêm mới: " + err.message, "danger");
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Lưu Lại</span>`;
+                lucide.createIcons();
+            }
         }
 
         function filterDataGrid() {
@@ -403,11 +634,14 @@
                     const sdt = (row["Số điện thoại"] || "");
                     const tenGiay = (row["Tên giày"] || "").toLowerCase();
                     return tenKhach.includes(searchVal) || sdt.includes(searchVal) || tenGiay.includes(searchVal);
-                } else {
+                } else if (currentTab === 'giat-giay') {
                     const tenKhach = (row["Tên khách hàng"] || "").toLowerCase();
                     const sdt = (row["Số điện thoại"] || "");
                     const dichVu = (row["Dịch vụ"] || "").toLowerCase();
                     return tenKhach.includes(searchVal) || sdt.includes(searchVal) || dichVu.includes(searchVal);
+                } else if (currentTab === 'loi-nhuan') {
+                    const tenGiay = (row["tenGiay"] || "").toLowerCase();
+                    return tenGiay.includes(searchVal);
                 }
             });
 
@@ -416,16 +650,16 @@
 
         function switchAdminTab(tabName) {
             currentTab = tabName;
-            const tabMua = document.getElementById('tab-admin-mua');
-            const tabGiat = document.getElementById('tab-admin-giat');
-
-            if (tabName === 'mua-giay') {
-                tabMua.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm bg-white text-indigo-600";
-                tabGiat.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-indigo-600";
-            } else {
-                tabGiat.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm bg-white text-indigo-600";
-                tabMua.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-indigo-600";
-            }
+            ['mua-giay', 'giat-giay', 'loi-nhuan'].forEach(id => {
+                const el = document.getElementById(`tab-admin-${id}`);
+                if (el) {
+                    if (id === tabName) {
+                        el.className = `flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm bg-white ${id === 'loi-nhuan' ? 'text-emerald-600' : 'text-indigo-600'} whitespace-nowrap`;
+                    } else {
+                        el.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-indigo-600 whitespace-nowrap";
+                    }
+                }
+            });
 
             document.getElementById('admin-search').value = "";
             lucide.createIcons();
@@ -443,18 +677,17 @@
             if (currentTab === 'mua-giay') {
                 document.getElementById('edit-ten').value = rowDataRef["Tên khách"] || "";
                 document.getElementById('edit-sdt').value = rowDataRef["Số điện thoại"] || "";
-
                 const hinhThucVal = rowDataRef["Hình thức"]?.value || rowDataRef["Hình thức"] || "Tiền mặt";
 
                 dynamicFields.innerHTML = `
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Tên và size giày *</label>
-                        <input type="text" id="edit-tengiay" required value="${rowDataRef["Tên giày"] || ""}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                        <input type="text" id="edit-tengiay" required value="${rowDataRef["Tên giày"] || ""}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-slate-50">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block font-bold text-slate-600 mb-1">Giá bán (VND) *</label>
-                            <input type="number" id="edit-giaban" required value="${Number(rowDataRef["Giá bán"]) || 0}" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                            <input type="text" id="edit-giaban" required value="${Number(rowDataRef["Giá bán"]) || 0}" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-slate-50">
                         </div>
                         <div>
                             <label class="block font-bold text-slate-600 mb-1">Hình thức thanh toán</label>
@@ -465,21 +698,16 @@
                         </div>
                     </div>
                 `;
-            } else {
+            } else if (currentTab === 'giat-giay') {
                 document.getElementById('edit-ten').value = rowDataRef["Tên khách hàng"] || "";
                 document.getElementById('edit-sdt').value = rowDataRef["Số điện thoại"] || "";
-
                 const ttThanhToanVal = rowDataRef["Trạng thái thanh toán"]?.value || rowDataRef["Trạng thái thanh toán"] || "Chưa thanh toán";
                 const ttXuLyVal = rowDataRef["Trạng thái xử lý"]?.value || rowDataRef["Trạng thái xử lý"] || "Đang xử lý";
 
                 dynamicFields.innerHTML = `
                     <div>
                         <label class="block font-bold text-slate-600 mb-1">Tên dịch vụ *</label>
-                        <input type="text" id="edit-dichvu" required value="${rowDataRef["Dịch vụ"] || ""}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">Chi phí (VND) *</label>
-                        <input type="number" id="edit-chiphi" required value="${Number(rowDataRef["Chi phí"]) || 0}" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                        <input type="text" id="edit-dichvu" required value="${rowDataRef["Dịch vụ"] || ""}" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-slate-50">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -522,7 +750,6 @@
 
             if (currentTab === 'mua-giay') {
                 let giaBanVal = Number(document.getElementById('edit-giaban').value.trim()) || 0;
-                // Kiểm tra gõ tắt giá bán
                 if (giaBanVal > 0 && giaBanVal < 10000) giaBanVal = giaBanVal * 1000;
 
                 payload = {
@@ -534,15 +761,11 @@
                     "Tổng thanh toán đơn": Number(giaBanVal)
                 };
             } else {
-                let chiPhiVal = Number(document.getElementById('edit-chiphi').value.trim()) || 0;
-                // Kiểm tra gõ tắt phí giặt
-                if (chiPhiVal > 0 && chiPhiVal < 10000) chiPhiVal = chiPhiVal * 1000;
-
                 payload = {
                     "Tên khách hàng": document.getElementById('edit-ten').value.trim(),
                     "Số điện thoại": document.getElementById('edit-sdt').value.trim(),
                     "Dịch vụ": document.getElementById('edit-dichvu').value.trim(),
-                    "Chi phí": Number(chiPhiVal),
+                    "Chi phí": 0,
                     "Trạng thái thanh toán": document.getElementById('edit-thanhtoan').value,
                     "Trạng thái xử lý": document.getElementById('edit-xuly').value
                 };
@@ -560,8 +783,7 @@
 
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
-                    const detail = errData.detail || errData.error || "Không rõ nguyên nhân";
-                    throw new Error(`${detail} (Mã lỗi: ${response.status})`);
+                    throw new Error(errData.detail || errData.error || "Lỗi cập nhật Baserow");
                 }
 
                 showToast("Đã cập nhật thông tin thành công!", "success");
@@ -598,25 +820,27 @@
         }
 
         async function executeDeleteRow(rowId) {
-            const tableId = currentTab === 'mua-giay' ? DB_CONFIG.tableMua : DB_CONFIG.tableGiat;
             const btnConfirm = document.getElementById('btn-confirm-delete');
-
             btnConfirm.disabled = true;
             btnConfirm.innerHTML = "Đang xóa...";
 
             try {
-                const response = await fetch(`https://api.baserow.io/api/database/rows/table/${tableId}/${rowId}/`, {
-                    method: "DELETE",
-                    headers: { "Authorization": `Token ${DB_CONFIG.token}` }
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    const detail = errData.detail || errData.error || "Không rõ nguyên nhân";
-                    throw new Error(`${detail} (Mã lỗi: ${response.status})`);
+                if (currentTab === 'loi-nhuan') {
+                    if (window.firebaseDb && window.fbDoc && window.fbDeleteDoc) {
+                        const docRef = window.fbDoc(window.firebaseDb, "doanhthu", rowId);
+                        await window.fbDeleteDoc(docRef);
+                        showToast("Đã xóa bản ghi Firebase thành công!", "success");
+                    }
+                } else {
+                    const tableId = currentTab === 'mua-giay' ? DB_CONFIG.tableMua : DB_CONFIG.tableGiat;
+                    const response = await fetch(`https://api.baserow.io/api/database/rows/table/${tableId}/${rowId}/`, {
+                        method: "DELETE",
+                        headers: { "Authorization": `Token ${DB_CONFIG.token}` }
+                    });
+                    if (!response.ok) throw new Error("Không thể xóa dòng trên Baserow");
+                    showToast("Xóa bản ghi Baserow thành công!", "success");
                 }
 
-                showToast("Xóa bản ghi dữ liệu thành công!", "success");
                 closeDeleteDialog();
                 await fetchAllData();
 
@@ -637,107 +861,8 @@
         }
 
         function closeLightbox() {
+            document.getElementById('lightbox-image').src = "";
             document.getElementById('lightbox-modal').classList.add('hidden');
-        }
-
-        // --- ⚡ THUẬT TOÁN CHỐT SỔ AN TOÀN ĐỘC LẬP TỪ MÀN HÌNH CHỦ - KHÔNG LIÊN QUAN GIẶT GIÀY ---
-        async function archiveAndClearPastMonths() {
-            const btnArchive = document.getElementById('btn-archive');
-            btnArchive.disabled = true;
-            btnArchive.innerHTML = "Đang quét dữ liệu bán giày...";
-
-            try {
-                // Tải độc lập bảng Mua để chốt sổ an toàn dù bạn đang xem tab Giặt
-                const response = await fetch(`https://api.baserow.io/api/database/rows/table/${DB_CONFIG.tableMua}/?user_field_names=true&size=200`, {
-                    headers: { "Authorization": `Token ${DB_CONFIG.token}` }
-                });
-
-                if (!response.ok) {
-                    throw new Error("Không thể kết nối đến máy chủ Baserow để lấy dữ liệu chốt sổ.");
-                }
-
-                const data = await response.json();
-                const salesData = data.results || [];
-
-                const now = new Date();
-                const currentMonth = now.getMonth();
-                const currentYear = now.getFullYear();
-
-                // 1. Phân loại tìm các đơn bán giày thuộc tháng cũ (không xử lý dòng chốt cũ)
-                const oldDetailedRows = salesData.filter(row => {
-                    const d = new Date(row["Thời gian"]);
-                    const isSummary = row["Số điện thoại"] === 'SYSTEM_SUMMARY';
-                    return !isSummary && (d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() < currentMonth));
-                });
-
-                if (oldDetailedRows.length === 0) {
-                    showToast("Hiện tại không có đơn bán giày thuộc tháng cũ nào cần dọn dẹp!", "success");
-                    return;
-                }
-
-                btnArchive.innerHTML = "Đang gom doanh thu...";
-
-                // Group old rows by Month/Year
-                let groupOldMonths = {};
-                oldDetailedRows.forEach(row => {
-                    const d = new Date(row["Thời gian"]);
-                    const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
-                    if (!groupOldMonths[key]) groupOldMonths[key] = { rows: [], total: 0, year: d.getFullYear(), month: d.getMonth() };
-                    groupOldMonths[key].rows.push(row);
-                    groupOldMonths[key].total += Number(row["Giá bán"]) || 0;
-                });
-
-                showToast(`Phát hiện ${Object.keys(groupOldMonths).length} kỳ tháng cũ cần chốt. Bắt đầu xử lý...`, "warning");
-
-                for (const [monthKey, data] of Object.entries(groupOldMonths)) {
-                    // Bước A: Gửi 1 dòng chốt sổ duy nhất lên Baserow (Không lưu ảnh cũ, không lưu tên khách để tối ưu bộ nhớ)
-                    const firstDayOfMonth = new Date(data.year, data.month, 1, 12, 0, 0).toISOString();
-                    
-                    const payload = {
-                        "Thời gian": firstDayOfMonth,
-                        "Tên khách": `TỔNG KẾT DOANH THU THÁNG ${monthKey}`,
-                        "Số điện thoại": "SYSTEM_SUMMARY",
-                        "Tên giày": "Hệ thống đã chốt sổ dọn dẹp kỳ tháng cũ",
-                        "Giá bán": Number(data.total),
-                        "Hình thức": "Tiền mặt",
-                        "Tổng thanh toán đơn": Number(data.total),
-                        "Link ảnh Bill": [], 
-                        "Link ảnh giày": []  
-                    };
-
-                    const postRes = await fetch(`https://api.baserow.io/api/database/rows/table/${DB_CONFIG.tableMua}/?user_field_names=true`, {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Token ${DB_CONFIG.token}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!postRes.ok) throw new Error(`Lỗi tạo dòng doanh thu tổng tháng ${monthKey}`);
-
-                    // Bước B: Xóa hàng loạt các đơn chi tiết của tháng cũ đó để giải phóng bộ nhớ
-                    btnArchive.innerHTML = `Đang dọn dẹp tháng ${monthKey}...`;
-                    for (const oldRow of data.rows) {
-                        const delRes = await fetch(`https://api.baserow.io/api/database/rows/table/${DB_CONFIG.tableMua}/${oldRow.id}/`, {
-                            method: "DELETE",
-                            headers: { "Authorization": `Token ${DB_CONFIG.token}` }
-                        });
-                        if (!delRes.ok) console.warn(`Không thể xóa dòng chi tiết có ID ${oldRow.id}`);
-                    }
-                }
-
-                showToast("Đã chốt sổ và giải phóng dung lượng bộ lưu trữ thành công rực rỡ!", "success");
-                await fetchAllData();
-
-            } catch (err) {
-                console.error(err);
-                showToast("Lỗi chốt sổ: " + err.message, "danger");
-            } finally {
-                btnArchive.disabled = false;
-                btnArchive.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>Bắt Đầu Chốt Sổ Tháng Cũ</span>`;
-                lucide.createIcons();
-            }
         }
 
         function formatMoney(amount) {
@@ -765,23 +890,15 @@
             }
 
             toast.className = `${bgClass} flex items-center space-x-2 px-4 py-3 rounded-xl shadow-lg text-xs font-semibold transform translate-y-2 opacity-0 transition duration-300 pointer-events-auto`;
-            toast.innerHTML = `
-                <i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i>
-                <span>${message}</span>
-            `;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
             
             container.appendChild(toast);
             lucide.createIcons();
 
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 50);
-
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 50);
             setTimeout(() => {
                 toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
+                setTimeout(() => { toast.remove(); }, 300);
             }, 3500); 
         }
     </script>

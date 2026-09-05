@@ -58,6 +58,12 @@
                 <span class="text-xs font-semibold text-slate-300">Đồng bộ Baserow Cloud & Firebase</span>
             </div>
             
+            <!-- NÚT DỌN RÁC -->
+            <button onclick="cleanupBaserow()" class="p-2.5 text-xs font-bold bg-amber-600 hover:bg-amber-700 rounded-xl border border-amber-500 text-white transition flex items-center justify-center space-x-1.5 shadow-md" title="Tự động xóa các đơn bán giày cũ hơn 3 ngày để nhẹ máy chủ">
+                <i data-lucide="trash" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Dọn rác (Sau 3 ngày)</span>
+            </button>
+
             <button onclick="fetchAllData()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-white transition flex items-center justify-center group" title="Đồng bộ dữ liệu thực tế">
                 <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-500"></i>
             </button>
@@ -301,9 +307,13 @@
             }
         }
 
+        // Đã vá lỗi Mixed Content (http sang https) để dẹp lỗi Failed to fetch
         async function fetchAllPages(url) {
             let results = []; let nextUrl = url;
             while(nextUrl) {
+                if (nextUrl.startsWith('http://')) {
+                    nextUrl = nextUrl.replace('http://', 'https://');
+                }
                 const res = await fetch(nextUrl, { headers: { "Authorization": `Token ${DB_CONFIG.token}` } });
                 if (!res.ok) throw new Error("Lỗi fetch dữ liệu Baserow");
                 const data = await res.json();
@@ -311,6 +321,46 @@
                 nextUrl = data.next;
             }
             return results;
+        }
+
+        // Tự động DỌN RÁC Baserow
+        async function cleanupBaserow() {
+            if(!confirm("Bạn có chắc muốn dọn rác?\nHành động này sẽ XÓA VĨNH VIỄN toàn bộ đơn MUA GIÀY đã tạo quá 3 ngày trên Baserow để giải phóng dung lượng.\n\n(Đơn Giặt Giày vẫn được giữ nguyên an toàn).")) return;
+            
+            showToast("Đang quét tìm dữ liệu rác...", "warning");
+            try {
+                const results = await fetchAllPages(`https://api.baserow.io/api/database/rows/table/${DB_CONFIG.tableMua}/?user_field_names=true`);
+                
+                const now = new Date();
+                const baNgayTruoc = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+                
+                const rowsToDelete = results.filter(row => {
+                    const rowDate = new Date(row["Thời gian"]);
+                    return rowDate < baNgayTruoc;
+                });
+
+                if(rowsToDelete.length === 0) {
+                    showToast("Baserow đang rất sạch sẽ, không có đơn cũ nào cần xóa!", "success");
+                    return;
+                }
+
+                showToast(`Tìm thấy ${rowsToDelete.length} đơn rác. Bắt đầu xóa...`, "warning");
+                
+                let count = 0;
+                for (const row of rowsToDelete) {
+                    await fetch(`https://api.baserow.io/api/database/rows/table/${DB_CONFIG.tableMua}/${row.id}/`, {
+                        method: "DELETE",
+                        headers: { "Authorization": `Token ${DB_CONFIG.token}` }
+                    });
+                    count++;
+                }
+                
+                showToast(`Hoàn tất! Đã giải phóng thành công ${count} đơn bán giày cũ!`, "success");
+                await fetchAllData();
+            } catch(e) {
+                console.error(e);
+                showToast("Lỗi dọn rác: " + e.message, "danger");
+            }
         }
 
         async function fetchAllData() {

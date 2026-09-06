@@ -164,7 +164,7 @@
 
     <!-- CORE SCRIPTS -->
     <script>
-        const BASEROW_TOKEN = "Qn92eA9q9e2w9e9e9e9e9e9e9e9e9e9e"; // NHỚ ĐIỀN TOKEN THẬT VÀO
+        const BASEROW_TOKEN = "Qn92eA9q9e2w9e9e9e9e9e9e9e9e9e9e"; // NHỚ ĐIỀN TOKEN THẬT
         const TABLE_MUA = 437000; 
         const TABLE_GIAT = 437001; 
 
@@ -211,6 +211,12 @@
                         url = url.replace('http://', 'https://');
                     }
                     const r = await fetch(url, { headers: { "Authorization": `Token ${BASEROW_TOKEN}` } });
+                    
+                    if (!r.ok) {
+                        console.error(`Lỗi HTTP Baserow: ${r.status}`);
+                        break;
+                    }
+                    
                     const data = await r.json();
                     if(data.results) results = results.concat(data.results);
                     url = data.next;
@@ -220,27 +226,38 @@
         }
 
         async function loadAllData() {
-            try {
-                dataMua = await fetchBaserowPages(TABLE_MUA);
-                dataGiat = await fetchBaserowPages(TABLE_GIAT);
+            // FIX: Dùng Try-Catch độc lập để Mua Giày - Giặt Giày - Lợi Nhuận không chờ đợi nhau hay kéo nhau chết.
+            
+            // 1. Tải Mua Giày
+            fetchBaserowPages(TABLE_MUA).then(res => {
+                dataMua = res;
                 renderBaserowList('mua', dataMua);
-                renderBaserowList('giat', dataGiat);
+            }).catch(e => console.log("Lỗi tải Mua Giày"));
 
+            // 2. Tải Giặt Giày
+            fetchBaserowPages(TABLE_GIAT).then(res => {
+                dataGiat = res;
+                renderBaserowList('giat', dataGiat);
+            }).catch(e => console.log("Lỗi tải Giặt Giày"));
+
+            // 3. Tải Lợi Nhuận (Firebase)
+            const loadFirebaseData = async () => {
                 if (window.fbDb) {
-                    const snap = await window.fbGetDocs(window.fbCollection(window.fbDb, "doanhthu"));
-                    dataDoanhThu = [];
-                    snap.forEach(docSnap => {
-                        dataDoanhThu.push({ id: docSnap.id, ...docSnap.data() });
-                    });
-                    dataDoanhThu.sort((a, b) => new Date(b.thoiGian) - new Date(a.thoiGian));
-                    renderFirebaseList();
+                    try {
+                        const snap = await window.fbGetDocs(window.fbCollection(window.fbDb, "doanhthu"));
+                        dataDoanhThu = [];
+                        snap.forEach(docSnap => {
+                            dataDoanhThu.push({ id: docSnap.id, ...docSnap.data() });
+                        });
+                        dataDoanhThu.sort((a, b) => new Date(b.thoiGian) - new Date(a.thoiGian));
+                        renderFirebaseList();
+                    } catch (e) { console.error("Lỗi tải Firebase", e); }
                 } else {
-                    setTimeout(loadAllData, 1000);
+                    // Nếu thư viện Firebase chưa load xong, thử lại sau 500ms
+                    setTimeout(loadFirebaseData, 500);
                 }
-            } catch(e) {
-                showToast("Lỗi tải dữ liệu!", "danger");
-                console.error(e);
-            }
+            };
+            loadFirebaseData();
         }
 
         // --- RENDER BASEROW (Mua & Giặt) ---

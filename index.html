@@ -70,8 +70,13 @@
         <!-- SECTION: LỢI NHUẬN (FIREBASE) -->
         <section id="sec-loi-nhuan" class="max-w-lg mx-auto hidden space-y-4">
             <div class="flex items-center justify-between mb-2">
-                <h2 class="text-sm font-bold text-slate-800 flex items-center"><i data-lucide="trending-up" class="w-4 h-4 mr-1.5 text-emerald-500"></i>Báo Cáo Lợi Nhuận</h2>
-                <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">Firebase</span>
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-sm font-bold text-slate-800 flex items-center"><i data-lucide="trending-up" class="w-4 h-4 mr-1.5 text-emerald-500"></i>Báo Cáo Lợi Nhuận</h2>
+                    <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">Firebase</span>
+                </div>
+                <button onclick="openAddManualModal()" class="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold transition flex items-center shadow-sm">
+                    <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i>Thêm Mới
+                </button>
             </div>
 
             <!-- Tổng quan dạng lưới 2 cột cho Mobile -->
@@ -182,10 +187,48 @@
         </div>
     </div>
 
+    <!-- MODAL THÊM MỚI DOANH THU THỦ CÔNG -->
+    <div id="add-manual-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
+            <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-400"></i>
+                    <h3 class="font-bold text-sm uppercase tracking-wide">Thêm Doanh Thu Ngoài</h3>
+                </div>
+                <button onclick="closeAddManualModal()" class="p-1 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="submitManualProfit(event)" class="p-5 space-y-4">
+                <div>
+                    <label class="block font-bold text-slate-600 text-xs mb-1">Tên sản phẩm *</label>
+                    <input type="text" id="manual-tengiay" required placeholder="Vd: Bán phụ kiện" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-600 text-xs mb-1">Giá bán *</label>
+                        <input type="text" id="manual-giaban" required placeholder="0" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 text-xs mb-1">Giá vốn *</label>
+                        <input type="text" id="manual-giavon" required placeholder="0" onblur="handleAdminPriceBlur(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeAddManualModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition text-sm">Hủy</button>
+                    <button type="submit" id="btn-save-manual" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition text-sm flex items-center space-x-1">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Thêm Mới</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- FIREBASE SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAWRBa3-QI8QG6kfP2J_qzgbpDz2_GJPp8",
@@ -205,6 +248,7 @@
         window.fbDoc = doc;
         window.fbUpdateDoc = updateDoc;
         window.fbDeleteDoc = deleteDoc;
+        window.fbAddDoc = addDoc;
     </script>
 
     <!-- CORE SCRIPTS -->
@@ -509,8 +553,8 @@
                             <div class="flex-1 relative">
                                 <label class="text-[10px] text-slate-500 font-bold block mb-1">Giá Vốn (Nhập)</label>
                                 <input type="number" id="gv-${item.id}" value="${gv === 0 ? '' : gv}" placeholder="0" onblur="handleAdminPriceBlur(this)"
-                                    class="w-full text-right px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition shadow-inner">
-                                <button onclick="saveGiaVonFirebase('${item.id}', 'gv-${item.id}')" class="absolute right-0 top-5 bottom-0 bg-indigo-100 text-indigo-600 px-2 rounded-r-lg hover:bg-indigo-200"><i data-lucide="check" class="w-3.5 h-3.5"></i></button>
+                                    class="w-full text-right pl-2 pr-10 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition shadow-inner">
+                                <button onclick="saveGiaVonFirebase('${item.id}', 'gv-${item.id}')" class="absolute right-0 top-5 bottom-0 bg-indigo-100 text-indigo-600 px-2.5 rounded-r-lg hover:bg-indigo-200 flex items-center justify-center"><i data-lucide="check" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
                         <button onclick="openDeleteDialog('${item.id}')" class="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition">
@@ -543,6 +587,60 @@
                 showToast("Lỗi lưu giá vốn", "danger");
             }
         };
+
+        // --- THÊM MỚI LỢI NHUẬN THỦ CÔNG ---
+        function openAddManualModal() {
+            document.getElementById('add-manual-modal').classList.remove('hidden');
+            document.getElementById('add-manual-modal').classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeAddManualModal() {
+            document.getElementById('add-manual-modal').classList.add('hidden');
+            document.getElementById('add-manual-modal').classList.remove('flex');
+        }
+
+        async function submitManualProfit(e) {
+            e.preventDefault();
+            const btnSave = document.getElementById('btn-save-manual');
+            const tenGiay = document.getElementById('manual-tengiay').value.trim();
+            let giaBan = Number(document.getElementById('manual-giaban').value.trim()) || 0;
+            let giaVon = Number(document.getElementById('manual-giavon').value.trim()) || 0;
+
+            if (giaBan > 0 && giaBan < 10000) giaBan *= 1000;
+            if (giaVon > 0 && giaVon < 10000) giaVon *= 1000;
+
+            btnSave.disabled = true;
+            btnSave.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>`;
+            lucide.createIcons();
+
+            try {
+                if (window.firebaseDb && window.fbAddDoc && window.fbCollection) {
+                    await window.fbAddDoc(window.fbCollection(window.firebaseDb, "doanhthu"), {
+                        tenGiay: tenGiay,
+                        giaBan: giaBan,
+                        giaVon: giaVon,
+                        hinhThuc: 'Tiền mặt',
+                        thoiGian: new Date().toISOString()
+                    });
+                    showToast("Thêm doanh thu thành công!", "success");
+                    closeAddManualModal();
+                    
+                    document.getElementById('manual-tengiay').value = "";
+                    document.getElementById('manual-giaban').value = "";
+                    document.getElementById('manual-giavon').value = "";
+                    
+                    await fetchAllData();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi thêm mới!", "danger");
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Thêm Mới</span>`;
+                lucide.createIcons();
+            }
+        }
 
         // --- CHỨC NĂNG SỬA ĐƠN ---
         function openEditModal(rowId) {
